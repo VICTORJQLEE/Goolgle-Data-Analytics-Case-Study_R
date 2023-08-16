@@ -1,0 +1,749 @@
+---
+title: "Cyclistic_case_study_victor"
+author: "Victor Lee"
+date: "2023-07-24"
+output: html_document
+---
+
+# PHASE 1: IDENTIFYING BUSINESS TASK
+
+In 2016, Cyclistic launched a successful bike-share offering. Since then, the program has grown to a fleet of 5,824 bicycles that are geotracked and locked into a network of 692 stations across Chicago. The bikes can be unlocked from one station and returned to any other station in the system anytime.
+
+Until now, Cyclistic’s marketing strategy relied on building general awareness and appealing to broad consumer segments. One approach that helped make these things possible was the flexibility of its pricing plans: single-ride passes, full-day passes, and annual memberships. Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members.
+
+Cyclistic’s finance analysts have concluded that annual members are much more profitable than casual riders. Although the pricing flexibility helps Cyclistic attract more customers, Moreno believes that maximizing the number of annual members will be key to future growth. Rather than creating a marketing campaign that targets all-new customers, Moreno believes there is a very good chance to convert casual riders into members. She notes that casual riders are already aware of the Cyclistic program and have chosen Cyclistic for their mobility needs.
+
+Moreno (The director of marketing) has set a clear goal: Design marketing strategies aimed at converting casual riders into annual members. In order to do that, however, the marketing analyst team needs to better understand how annual members and casual riders differ, why casual riders would buy a membership, and how digital media could affect their marketing tactics. Moreno and her team are interested in analyzing the Cyclistic historical bike trip data to identify trends. Moreno wants our team to answer: **_How do annual members and casual riders use Cyclistic bikes differently?_**
+
+# PHASE 2: PREPARING DATA
+
+The dataset provided for this case study project includes 39 ‘.csv’ files representing each month from April 2020 to June 2023 and is located on the company’s cloud storage (Amazon Web Services : <https://divvy-tripdata.s3.amazonaws.com/index.html>).
+
+I download these files to my local folder. As a practice, I plan to use R to process and analyse these data. To input these data into R, I setup my worddirectory with code in chunk 1. 
+
+Each table uses 13 columns ("ride_id", "rideable_type", "started_at", "ended_at",       "start_station_name", "start_station_id", "end_station_name", "end_station_id", "start_lat", "start_lng", "end_lat",     "end_lng", "member_casual") to record each month's rides.
+
+Further inspection of the files showed that there are multiple null values across tables, also columns have inconsistent naming and formatting that causes duplicates and the inability to merge tables without additional formatting.
+
+Thus, to prepare data for cleaning, we need to change the type of two columns (start_station_id, end_station_id) of the first 7 months to match the most recent data. View in BigQuery.
+
+Now that we have all the data in one place saved as a new virtual table, we can start to clean the data off possible inconsistencies and/or errors. We will also add new columns based on existing data calculations to get more in-depth insights about user behaviour.
+
+```{r setup, include=FALSE, echo = FALSE}
+require("knitr")
+opts_knit$set(root.dir = "/Users/rachel_sun/Desktop/divvy")
+knitr::opts_knit$set(root.dir = normalizePath("/Users/rachel_sun/Desktop/divvy")) 
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+getwd()
+```
+
+```{r}
+divvy_202004 <- read.csv("202004-divvy-tripdata.csv")
+```
+
+```{r}
+head(divvy_202004)
+```
+```{r}
+summary(divvy_202004)
+```
+
+```{r}
+dim(divvy_202004)
+```
+
+
+```{r}
+View(divvy_202004)
+```
+
+```{r}
+glimpse(divvy_202004)
+```
+Here, we can see that the start_staion_id and end_station_id are integer type. However, these two columns from 202012 to the end, are character types. We need transfer these two into character type for 202004 - 202411. 
+
+```{r}
+divvy_202004$start_station_id <- as.character(divvy_202004$start_station_id)
+divvy_202004$end_station_id <- as.character(divvy_202004$end_station_id)
+```
+
+```{r}
+str(divvy_202004)
+```
+
+
+
+```{r}
+divvy_202004$started_at <-  as.POSIXct(divvy_202004$started_at)
+```
+
+```{r}
+divvy_202004$ended_at <- as.POSIXct(divvy_202004$ended_at)
+```
+
+
+```{r}
+#ride_length <- strftime(as.POSIXct("00:00:00", format="%H:%M:%S") + 
+                       # (divvy_202004$ended_at - divvy_202004$started_at), format="%H:%M:%S")
+```
+
+```{r}
+#ride_length
+```
+
+
+```{r}
+day_of_week <- as.numeric(format(divvy_202004$started_at, format = "%u"))
+```
+
+```{r}
+head(day_of_week)
+```
+
+```{r}
+#day_of_week2 <- format(divvy_202004$started_at, format = "%a")
+```
+
+```{r}
+#head(day_of_week2)
+```
+
+
+```{r}
+#print(divvy_202004)
+```
+
+```{r}
+str(divvy_202004)
+```
+
+```{r}
+colnames(divvy_202004)
+```
+
+
+```{r}
+divvy_202005 <- read.csv("202005-divvy-tripdata.csv")
+```
+
+```{r}
+summary(divvy_202005)
+```
+
+
+```{r}
+colnames(divvy_202005)
+```
+
+
+
+```{r}
+divvy_202006 <- read.csv("202006-divvy-tripdata.csv")
+```
+
+```{r}
+summary(divvy_202006)
+```
+
+
+```{r}
+colnames(divvy_202006)
+```
+
+
+```{r}
+divvy_202007 <- read.csv("202007-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202007)
+```
+
+
+```{r}
+divvy_202008 <- read.csv("202008-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202008)
+```
+
+
+```{r}
+divvy_202009 <- read.csv("202009-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202009)
+```
+
+```{r}
+divvy_202010 <- read.csv("202010-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202010)
+```
+
+```{r}
+divvy_202011 <- read.csv("202011-divvy-tripdata.csv")
+```
+
+```{r}
+str(divvy_202011)
+```
+
+
+```{r}
+colnames(divvy_202011)
+```
+
+```{r}
+divvy_202012 <- read.csv("202012-divvy-tripdata.csv")
+```
+
+```{r}
+str(divvy_202012)
+```
+
+
+```{r}
+colnames(divvy_202012)
+```
+
+```{r}
+divvy_202101 <- read.csv("202101-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202101)
+```
+
+```{r}
+divvy_202102 <- read.csv("202102-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202102)
+```
+
+```{r}
+divvy_202103 <- read.csv("202103-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202103)
+```
+
+
+```{r}
+divvy_202104 <- read.csv("202104-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202104)
+```
+
+```{r}
+divvy_202105 <- read.csv("202105-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202105)
+```
+
+```{r}
+divvy_202106 <- read.csv("202106-divvy-tripdata.csv")
+```
+
+```{r}
+#divvy_202106 <- read_excel("202106-divvy-tripdata.xlsx")
+```
+
+```{r}
+str(divvy_202106)
+```
+
+
+```{r}
+colnames(divvy_202106)
+```
+
+```{r}
+divvy_202107 <- read.csv("202107-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202107)
+```
+
+```{r}
+str(divvy_202107)
+```
+
+
+```{r}
+colnames(divvy_202107)
+```
+
+
+```{r}
+divvy_202108 <- read.csv("202108-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202108)
+```
+
+```{r}
+divvy_202109 <- read.csv("202109-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202109)
+```
+
+```{r}
+divvy_202110 <- read.csv("202110-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202110)
+```
+
+```{r}
+divvy_202111 <- read.csv("202111-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202111)
+```
+
+```{r}
+divvy_202112 <- read.csv("202112-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202112)
+```
+
+```{r}
+divvy_202201 <- read.csv("202201-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202201)
+```
+
+```{r}
+divvy_202202 <- read.csv("202202-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202202)
+```
+
+```{r}
+divvy_202203 <- read.csv("202203-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202203)
+```
+
+```{r}
+divvy_202204 <- read.csv("202204-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202204)
+```
+
+```{r}
+divvy_202205 <- read.csv("202205-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202205)
+```
+
+```{r}
+divvy_202206 <- read.csv("202206-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202206)
+```
+
+```{r}
+divvy_202207 <- read.csv("202207-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202207)
+```
+
+```{r}
+divvy_202208 <- read.csv("202208-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202208)
+```
+
+```{r}
+divvy_202209 <- read.csv("202209-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202209)
+```
+
+```{r}
+divvy_202210 <- read.csv("202210-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202210)
+```
+
+```{r}
+divvy_202211 <- read.csv("202211-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202211)
+```
+
+```{r}
+divvy_202212 <- read.csv("202212-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202212)
+```
+
+```{r}
+divvy_202301 <- read.csv("202301-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202301)
+```
+
+```{r}
+divvy_202302 <- read.csv("202302-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202302)
+```
+
+```{r}
+divvy_202303 <- read.csv("202303-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202303)
+```
+
+```{r}
+divvy_202304 <- read.csv("202304-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202304)
+```
+
+```{r}
+divvy_202305 <- read.csv("202305-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202305)
+```
+
+```{r}
+divvy_202306 <- read.csv("202306-divvy-tripdata.csv")
+```
+
+```{r}
+colnames(divvy_202306)
+```
+
+```{r}
+#summary(divvy_202306)
+```
+
+```{r}
+#sdivvy_202306 <- sample_n(divvy_202306, 50000)
+```
+
+
+```{r}
+#summary(sdivvy_202306)
+```
+
+```{r}
+#install.packages("ggmap")
+#library(ggmap)
+```
+
+```{r}
+#library(tidyverse)
+#install.packages("sf")
+#library(sf)
+#install.packages("Rcpp")
+#install.packages("plotly")
+#library(plotly)
+#library(Rcpp)
+#install.packages("mapview")
+#library(mapview)
+```
+
+
+```{r}
+#mapview(data = divvy_202306, xcol = start_lat, ycol = start_lng, crs = 4269, grid = F) 
+```
+
+
+vertical merge data with rbind() as all of dataset have the same columns
+
+```{r}
+#mdivvy <- rbind(divvy_202004, divvy_202005, divvy_202006,divvy_202007,divvy_202008, divvy_202009, divvy_202010, divvy_202011, divvy_202012, divvy_202101, divvy_202102, divvy_202103, divvy_202104, divvy_202105, divvy_202106, divvy_202107, divvy_202108, divvy_202109, divvy_202110, divvy_202111, divvy_202112, divvy_202201, divvy_202202, divvy_202203, divvy_202204, divvy_202205, divvy_202206, divvy_202207, divvy_202208, divvy_202209, divvy_202210, divvy_202211, divvy_202212, divvy_202301, divvy_202302, divvy_202303, divvy_202304, divvy_202305, divvy_202306)
+```
+
+```{r}
+#head(mdivvy)
+```
+
+
+```{r}
+#mdivvy$started_at <-  as.POSIXct(mdivvy$started_at)
+```
+
+```{r}
+#mdivvy$ended_at <- as.POSIXct(mdivvy$ended_at)
+```
+
+
+
+```{r}
+#mdivvy$ride_length <- strftime(as.POSIXct("00:00:00", format="%H:%M:%S") + 
+                        #(mdivvy$ended_at - mdivvy$started_at), format="%H:%M:%S")
+```
+
+
+```{r}
+head(mdivvy)
+```
+```{r}
+#colnames(mdivvy)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
